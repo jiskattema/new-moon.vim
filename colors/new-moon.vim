@@ -25,82 +25,65 @@ if !exists('g:nm_all_bold')
     let g:nm_all_bold = 0
 endif
 if !exists('g:nm_use_italics')
-    let g:nm_use_italics = 0
+    let g:nm_use_italics = 1
+endif
+if !exists('g:nm_use_bolds')
+    let g:nm_use_bolds = 0
 endif
 
 function! s:H(group,fg,bg,style) "{{{
-" group = Syntax Group
-" :help syntax
-" fg = Foreground Color
-" bg = Background Color
-" style = Font Style
+  " group = Syntax Group
+  " :help syntax
+  " fg = Foreground Color
+  " bg = Background Color
+  " style = Font Style
 
-if &t_Co == 8 && exists(a:fg[2]) && exists(a:bg[2])
-    " low color & does have term8 colors
+  if !empty(a:fg)
+      " foreground is NOT empty
+      let l:gfg = a:fg[0]
+      let l:cfg = a:fg[1]
+  else
+      let l:gfg = "NONE"
+      let l:cfg = "NONE"
+  endif
 
-    let l:cbg = 0
-    " term8 background is rendered exclusively black
+  if !empty(a:bg)
+      " background is NOT empty
+      let l:gbg = a:bg[0]
+      let l:cbg = a:bg[1]
+  else
+      " background IS empty
+      let l:gbg = "NONE"
+      let l:cbg = "NONE"
+  endif
 
-    if !empty(a:fg)
-        " foreground is NOT empty
-        let l:cfg = a:fg[2]
-    else 
-        "foreground IS empty
-        let l:cfg = "NONE"
-    endif
-    exec "hi ".a:group." ctermfg = ".l:cfg." ctermbg = ".l:cbg
+  if g:nm_all_bold == 1
+      " all text is rendered bold
+      let l:gstyle = "bold"
+      let l:cstyle = "bold"
+  else
+      if !empty(a:style)
+          if a:style == "italic" && g:nm_use_italics == 0
+              " no italics should be used
+              let l:gstyle = "NONE"
+              let l:cstyle = "NONE"
+          elseif a:style == "bold" && g:nm_use_bolds == 0
+              " no bolds should be used
+              let l:gstyle = "NONE"
+              let l:cstyle = "NONE"
+          else
+              " style is NOT empty
+              let l:gstyle = a:style
+              let l:cstyle = a:style
+          endif
+      else
+          " style IS empty
+          let l:gstyle = "NONE"
+          let l:cstyle = "NONE"
+      endif
+  endif
 
-else
-
-    if !empty(a:fg)
-        " foreground is NOT empty
-        let l:gfg = a:fg[0]
-        let l:cfg = a:fg[1]
-    else
-        let l:gfg = "NONE"
-        let l:cfg = "NONE"
-    endif
-
-    if !empty(a:bg)
-        " background is NOT empty
-        let l:gbg = a:bg[0]
-        let l:cbg = a:bg[1]
-    else
-        " background IS empty
-        let l:gbg = "NONE"
-        let l:cbg = "NONE"
-    endif
-
-    if g:nm_all_bold == 1
-        " all text is rendered bold
-        let l:gstyle = "bold"
-        let l:cstyle = "bold"
-    else
-        if !empty(a:style)
-            if a:style == "italic" && g:nm_use_italics == 0
-                " no italics should be used
-                let l:gstyle = "NONE"
-                let l:cstyle = "NONE"
-            else
-                " style is NOT empty
-                let l:gstyle = a:style
-                let l:cstyle = a:style
-                " TODO check if style works in TERM
-            endif
-        else
-            " style IS empty
-            let l:gstyle = "NONE"
-            let l:cstyle = "NONE"
-        endif
-    endif
-
-    " Schema:
-    " hi "<Syntax group>" guifg = "<fgcolor>" guibg = "<bgcolor>" 
-    " \ ctermfg = "<termfg>" ctermbg = "<termbg>" 
-    " \ gui = "<guistyle>" term = "<termstyle>"
-    
-    exec "hi ".a:group." guifg=".l:gfg." ctermfg=".l:cfg." guibg=".l:gbg." ctermbg=".l:cbg." gui=".l:gstyle." term=".l:cstyle
-endif
+  exec "hi ".a:group." guifg=".l:gfg." guibg=".l:gbg." gui=".l:gstyle ." cterm=".l:cstyle
 endfun
 "}}}
 
@@ -143,7 +126,7 @@ let s:truewhite = [ '#FFFFFF', 15,  15, 7 ]
 " --- Palette {{{
 " ------------------------------------------------------------------------------
 "  TODO add 16 and 8 colors
-let s:warmgray = [ '#5f5f5f', 59 ] " TODO temporary, maybe use a grayscale color
+let s:warmgray =  [ '#5f5f5f', 59  ] " TODO temporary, maybe use a grayscale color
 let s:jade =      [ '#94C7B5', 115 ]
 let s:darkblue =  [ '#63A1C2', 73  ]
 let s:aqua =      [ '#8ADDF4', 117 ] " TODO, term too close to s:jade
@@ -156,6 +139,7 @@ let s:maize =     [ '#e3c485', 186 ]
 let s:palerose =  [ '#F4E1E1', 224 ]
 let s:salmon =    [ '#F57878', 210 ]
 let s:emerald =   [ '#49C698', 78  ]
+let s:greenish =  [ '#99ccaa', 78  ]
 " }}}
 
 " ##############################################################################
@@ -171,7 +155,7 @@ let s:foreground = s:white
 let s:background = s:gray4
 
 let s:positive = s:jade
-let s:neutral = s:aqua
+let s:neutral  = s:aqua
 let s:negative = s:palerose
 "}}}
 " --- Defaults {{{
@@ -186,7 +170,7 @@ let s:negative = s:palerose
 let s:comment = s:gray17
 
 let s:constant = s:aqua
-let s:string = s:jade           " MINOR of Constant
+let s:string = s:jade            " MINOR of Constant
 let s:character = s:constant     " MINOR of Constant
 let s:number = s:orangered       " MINOR of Constant
 let s:boolean = s:constant       " MINOR of Constant
@@ -215,11 +199,11 @@ let s:structure = s:type         " MINOR of Type
 let s:typedef = s:type           " MINOR of Type
 
 let s:special = s:orangered
-let s:specialchar = s:salmon    " MINOR of Special
-let s:tag = s:special " MINOR of Special
-let s:delimiter = s:truewhite      " MINOR of Special
+let s:specialchar = s:salmon     " MINOR of Special
+let s:tag = s:special            " MINOR of Special
+let s:delimiter = s:truewhite    " MINOR of Special
 let s:specialcomment = s:special " MINOR of Special
-let s:debug = s:special         " MINOR of Special
+let s:debug = s:special          " MINOR of Special
 
 let s:underlined = s:orangered
 
@@ -246,55 +230,61 @@ let s:todo = s:truewhite
 "
 call s:H("Normal",          s:foreground,     s:background, "")
 
-call s:H("ColorColumn",     s:comment,        s:gray3,        "")
-call s:H("Conceal",         s:gray17,            "",           "")
+call s:H("ColorColumn",     s:comment,        s:gray3,      "")
+call s:H("Conceal",         s:gray17,         "",           "")
 call s:H("Cursor",          s:background,     s:foreground, "")
-call s:H("CursorColumn",    "",               "",           "")
 call s:H("CursorIM",        s:background,     s:foreground, "")
-call s:H("CursorLine",      "",               s:gray3,        "")
-call s:H("CursorLineNr",    "",               s:gray3,        "bold")
+call s:H("CursorColumn",    "",               s:gray3,      "")
+call s:H("CursorLine",      "",               s:gray3,      "")
+call s:H("CursorLineNr",    "",               s:gray3,      "bold")
 
-call s:H("DiffAdd",         "",               s:positive,   "")
-call s:H("DiffChange",      "",               s:neutral,    "")
-call s:H("DiffDelete",      "",               s:negative,   "")
+call s:H("DiffAdd",         s:greenish,       s:gray4,      "")
+call s:H("DiffChange",      s:maize,          s:gray4,      "")
+call s:H("DiffDelete",      s:salmon,         s:gray4,      "")
+
+call s:H("DiffAdded",       s:greenish,       s:gray4,      "")
+call s:H("DiffChanged",     s:maize,          s:gray4,      "")
+call s:H("DiffDeleted",     s:salmon,         s:gray4,      "")
+call s:H("DiffText",        s:salmon,         s:gray4,      "")
+
 call s:H("Directory",       s:special,        "",           "")
 
 call s:H("ErrorMsg",        s:error,          s:negative,   "")
 
-call s:H("FoldColumn",      "",               s:warmgray,        "")
-call s:H("Folded",          "",               s:warmgray,        "")
+call s:H("FoldColumn",      "",               s:warmgray,   "")
+call s:H("Folded",          "",               s:warmgray,   "")
 
 call s:H("IncSearch",       s:background,     s:foreground, "")
 
 call s:H("LineNr",          s:comment,        "",           "")
 
 call s:H("MatchParen",      s:background,     s:foreground, "bold")
-call s:H("ModeMsg",         s:special,        s:gray3,        "bold")
-call s:H("MoreMsg",         s:special,        s:gray3,        "")
+call s:H("ModeMsg",         s:special,        s:gray3,      "bold")
+call s:H("MoreMsg",         s:special,        s:gray3,      "")
 
 call s:H("NonText",         s:operator,       "",           "")
 
-call s:H("Pmenu",           "",               "",           "")
-call s:H("PmenuSbar",       "",               "",           "")
-call s:H("PmenuSel",        s:special,        s:gray3,        "")
+call s:H("Pmenu",           s:white,          s:gray6,      "")
+call s:H("PmenuSbar",       s:gray6,          s:gray6,      "")
+call s:H("PmenuSel",        s:white,          s:gray8,      "")
 
-call s:H("Question",        s:special,        s:gray3,        "bold")
+call s:H("Question",        s:special,        s:gray3,      "bold")
 
 call s:H("Search",          s:background,     s:foreground, "")
 call s:H("SignColumn",      "",               "",           "")
 call s:H("SpecialKey",      s:special,        "",           "")
 call s:H("SpelBad",         s:error,          "",           "")
 call s:H("SpellRare",       s:neutral,        "",           "")
-call s:H("StatusLine",      s:truewhite,          s:gray3,        "")
-call s:H("StatusLineNC",    s:gray20,            s:gray3,        "")
+call s:H("StatusLine",      s:truewhite,      s:gray3,      "")
+call s:H("StatusLineNC",    s:gray20,         s:gray3,      "")
 
-call s:H("TabLine",         "",               s:gray3,        "")
+call s:H("TabLine",         "",               s:gray3,      "")
 call s:H("TabLineFill",     "",               "",           "")
-call s:H("TabLineSel",      s:gray20,            s:gray3,        "")
+call s:H("TabLineSel",      s:gray20,         s:gray3,      "")
 call s:H("Title",           "",               "",           "")
 
-call s:H("VertSplit",       "",               "",           "")
-call s:H("Visual",          "",               s:gray3,        "")
+call s:H("VertSplit",       "",               s:background, "")
+call s:H("Visual",          s:trueblack,      s:jade,       "")
 
 call s:H("WildMenu",        s:special,        "",           "")
 "}}}
@@ -347,6 +337,7 @@ call s:H("Special",         s:special,        "",           "")
 call s:H("SpecialChar",     s:specialchar,    "",           "")
 call s:H("Tag",             s:tag,            "",           "")
 call s:H("Delimiter",       s:delimiter,      "",           "")
+call s:H("MatchParen",      s:special,        "",           "")
 call s:H("SpecialComment",  s:specialcomment, "",           "")
 call s:H("Debug",           s:debug,          "",           "")
 
